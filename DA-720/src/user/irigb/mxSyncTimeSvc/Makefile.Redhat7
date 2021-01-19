@@ -1,0 +1,13 @@
+
+install:
+	echo "Installed for Redhat/CentOS 7/8"
+	install ServiceSyncTime.service $(DESTDIR)/lib/systemd/system/
+	install mx_service_sync_time $(DESTDIR)/sbin/
+	pidof systemd && systemctl enable ServiceSyncTime.service || echo "The ServiceSyncTime.service cannot support in your system becasue it doesn't have systemd"
+
+uninstall:
+	echo "Uninstalled for Redhat/CentOS 7/8"
+	pidof systemd && systemctl disable ServiceSyncTime.service || echo "Not need to disable the ServiceSyncTime.service"
+	-/usr/bin/rm -rf $(DESTDIR)/lib/systemd/system/ServiceSyncTime.service \
+		$(DESTDIR)/sbin/mx_service_sync_time
+

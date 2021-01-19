@@ -1,0 +1,122 @@
+diff -Nru mxser/driver/kernel5.x/mxpcie.c mxser_RHEL8/driver/kernel5.x/mxpcie.c
+--- mxser/driver/kernel5.x/mxpcie.c	2019-09-03 22:27:57.000000000 -0400
++++ mxser_RHEL8/driver/kernel5.x/mxpcie.c	2020-11-06 04:00:07.000000000 -0500
+@@ -106,7 +106,9 @@
+ #define ENABLE_PCI_CAP	0x8001
+ #define DISABLE_PCI_CAP	0x0001
+ 
+-#if (LINUX_VERSION_CODE < VERSION_CODE(5,0,0))
++#if (RHEL_MAJOR==8) // Jared: use RHEL_MAJOR 8 to define the code for RHEL8
++#define ACCESS_OK(x,y,z) access_ok(y,z)
++#elif (LINUX_VERSION_CODE < VERSION_CODE(5,0,0))
+ #define ACCESS_OK(x,y,z) access_ok(x,y,z)
+ #else
+ #define ACCESS_OK(x,y,z) access_ok(y,z)
+@@ -420,8 +422,11 @@
+ 	.hangup = mxupcie_hangup,
+ 	.tiocmget = mxupcie_tiocmget,
+ 	.tiocmset = mxupcie_tiocmset,
++// Jared: use RHEL_MAJOR 8 to undefine the code for RHEL8
++#if (LINUX_VERSION_CODE >= VERSION_CODE(4,20,0))
+ 	.set_serial = mx_set_serial_info,
+ 	.get_serial = mx_get_serial_info,
++#endif
+ 	.get_icount = mx_get_icount,
+ 	.break_ctl = mxupcie_rs_break,
+ 	.wait_until_sent = mxupcie_wait_until_sent,
+@@ -1051,8 +1056,9 @@
+ 	while ( 1 ) {
+ 		c = MIN(count, MIN(SERIAL_XMIT_SIZE - info->xmit_cnt - 1,
+ 			       SERIAL_XMIT_SIZE - info->xmit_head));
+-		if ( c <= 0 )
++		if ( c <= 0 ) {
+ 			break;
++		}
+ 
+ 			memcpy(info->xmit_buf + info->xmit_head, buf, c);
+ 		MX_LOCK(&info->slock);    
+diff -Nru mxser/driver/kernel5.x/mxpcie.h mxser_RHEL8/driver/kernel5.x/mxpcie.h
+--- mxser/driver/kernel5.x/mxpcie.h	2019-09-03 22:27:57.000000000 -0400
++++ mxser_RHEL8/driver/kernel5.x/mxpcie.h	2020-11-06 01:39:30.000000000 -0500
+@@ -304,7 +304,11 @@
+ #define MX_TTY_DRV(x)	tty->driver->x
+ 
+ #if (LINUX_VERSION_CODE < VERSION_CODE(5,0,0))
++#ifdef RHEL_MAJOR // Jared: use RHEL_MAJOR 8 to define the code for RHEL8
++#define MX_ACCESS_CHK(type, addr, size)	access_ok(addr, size)
++#else
+ #define MX_ACCESS_CHK(type, addr, size)	access_ok(type, addr, size)	
++#endif
+ #else
+ #define MX_ACCESS_CHK(type, addr, size)	access_ok(addr, size)	
+ #endif
+diff -Nru mxser/driver/kernel5.x/mxser.c mxser_RHEL8/driver/kernel5.x/mxser.c
+--- mxser/driver/kernel5.x/mxser.c	2019-09-03 22:27:57.000000000 -0400
++++ mxser_RHEL8/driver/kernel5.x/mxser.c	2020-11-06 03:59:36.000000000 -0500
+@@ -244,7 +244,7 @@
+ #define	CA114_ID    	5
+ #define	CA134I_ID    	6
+ 
+-#if (LINUX_VERSION_CODE < VERSION_CODE(5,0,0))
++#if (LINUX_VERSION_CODE < VERSION_CODE(4,18,0)) // Customized for Redhat 8
+ #define ACCESS_OK(x,y,z) access_ok(x,y,z)
+ #else
+ #define ACCESS_OK(x,y,z) access_ok(y,z)
+@@ -797,8 +797,11 @@
+ 	.hangup = mxser_hangup,
+ 	.tiocmget = mxser_tiocmget,
+ 	.tiocmset = mxser_tiocmset,
++// Jared: use RHEL_MAJOR 8 to undefine the code for RHEL8
++#if (LINUX_VERSION_CODE >= VERSION_CODE(4,20,0))
+ 	.set_serial = mxser_set_serial_info,
+ 	.get_serial = mxser_get_serial_info,
++#endif
+ 	.get_icount = mxser_get_icount,
+ 	.break_ctl = mxser_rs_break,
+ 	.wait_until_sent = mxser_wait_until_sent,
+diff -Nru mxser/driver/kernel5.x/mxser.h mxser_RHEL8/driver/kernel5.x/mxser.h
+--- mxser/driver/kernel5.x/mxser.h	2019-09-03 22:27:57.000000000 -0400
++++ mxser_RHEL8/driver/kernel5.x/mxser.h	2020-11-06 01:40:18.000000000 -0500
+@@ -429,7 +429,11 @@
+ #define MX_CGRP()	process_group(current)	
+ 
+ #if (LINUX_VERSION_CODE < VERSION_CODE(5,0,0))
+-#define MX_ACCESS_CHK(type, addr, size)	access_ok(type, addr, size)	
++#ifdef RHEL_MAJOR // Jared: use RHEL_MAJOR 8 to define the code for RHEL8
++#define MX_ACCESS_CHK(type, addr, size)	access_ok(addr, size)
++#else
++#define MX_ACCESS_CHK(type, addr, size)	access_ok(type, addr, size)
++#endif
+ #else
+ #define MX_ACCESS_CHK(type, addr, size)	access_ok(addr, size)	
+ #endif
+diff -Nru mxser/Makefile mxser_RHEL8/Makefile
+--- mxser/Makefile	2019-09-03 22:27:57.000000000 -0400
++++ mxser_RHEL8/Makefile	2020-11-06 05:13:58.000000000 -0500
+@@ -3,7 +3,8 @@
+ 
+ DRIVER_PATH:=driver/kernel5.x
+ 
+-all: check_version utility_make mxser
++#all: check_version utility_make mxser
++modules: check_version mxser
+ 
+ SP1: check_version utility_make mxsersp1
+ 
+@@ -19,11 +20,11 @@
+ uninstall: check_version driver_uninstall utility_uninstall
+ 
+ check_version:
+-ifneq ("$(KERNEL_VERSION_MAJOR_NUMBER)","5")
+-	@echo "Error: Your kernel version is $(KERNEL_VERSION_MAJOR_NUMBER).x."
+-	@echo "       This driver only support linux kernel 5.x."
+-	@exit 1;
+-endif
++#ifneq ("$(KERNEL_VERSION_MAJOR_NUMBER)","5")
++#	@echo "Error: Your kernel version is $(KERNEL_VERSION_MAJOR_NUMBER).x."
++#	@echo "       This driver only support linux kernel 5.x."
++#	@exit 1;
++#endif
+ 
+ utility_make :
+ 	@cd utility;\

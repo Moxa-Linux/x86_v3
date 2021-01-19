@@ -1,0 +1,12 @@
+[Unit]
+Description=Moxa Gpio sysfs node export service
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/mxser_init start
+ExecStop=/sbin/mxser_init stop
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+

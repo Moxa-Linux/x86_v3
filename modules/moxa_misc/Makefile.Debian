@@ -1,0 +1,25 @@
+
+install:
+	echo "Installed for Debian/Ubuntu"
+	pidof systemd && systemctl enable mx_gpio_export.service || echo "The mx_gpio_export.service cannot support in your system becasue it doesn't have systemd"
+	[ -d $(DESTDIR)/lib/modprobe.d ] || mkdir -p $(DESTDIR)/lib/modprobe.d
+	[ -f $(DESTDIR)/lib/modprobe.d/it87_wdt.conf ] || echo "options it87_wdt nocir=1" > $(DESTDIR)/lib/modprobe.d/it87_wdt.conf
+	[ -f $(DESTDIR)/lib/modprobe.d/iTCO-blacklist.conf ] || ( echo "blacklist iTCO_wdt" > $(DESTDIR)/lib/modprobe.d/iTCO-blacklist.conf; \
+	echo "blacklist iTCO_vendor_support" >> $(DESTDIR)/lib/modprobe.d/iTCO-blacklist.conf; \
+	echo "blacklist 8250_fintek" >> $(DESTDIR)/lib/modprobe.d/iTCO-blacklist.conf;\
+	)
+	[ -d $(DESTDIR)/etc ] || mkdir -p $(DESTDIR)/etc
+	[ -f $(DESTDIR)/etc/modules ] && grep -q $(TARGET_MODULE) $(DESTDIR)/etc/modules  || echo "$(TARGET_MODULE)" >> $(DESTDIR)/etc/modules
+
+
+uninstall:
+	echo "Uninstalled for Debian/Ubuntu"; \
+	sed -i '/$(TARGET_MODULE)/d' $(DESTDIR)/etc/modules
+	[ -f $(DESTDIR)/lib/modprobe.d/iTCO-blacklist.conf ] && -/bin/rm -rf $(DESTDIR)/lib/modprobe.d/iTCO-blacklist.conf || echo "$(DESTDIR)/lib/modprobe.d/iTCO-blacklist.conf doesn't exist"
+	[ -f $(DESTDIR)/lib/modprobe.d/it87_wdt.conf ] && -/bin/rm -rf $(DESTDIR)/lib/modprobe.d/it87_wdt.conf || echo "$(DESTDIR)/lib/modprobe.d/it87_wdt.conf doesn't exist"
+	pidof systemd && systemctl disable mx_gpio_export.service || echo "Not need to disable the mx_gpio_export.service"
+	-/bin/rm -rf $(DESTDIR)/lib/modules/$(KERNEL_VERSION)/kernel/drivers/misc/$(TARGET_MODULE).ko \
+	$(DESTDIR)/usr/local/bin/setinterface \
+	$(DESTDIR)/sbin/mx_gpio_export \
+	$(DESTDIR)/lib/systemd/system/mx_gpio_export.service
+

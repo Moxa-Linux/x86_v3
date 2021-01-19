@@ -1,0 +1,12 @@
+#!/bin/sh
+. /usr/share/initramfs-tools/hook-functions
+
+if [ ! ${DESTDIR} ]; then
+    echo "ERROR: Please don't run this manually. This is a hook for update-initramfs"
+    exit -1
+fi
+
+FIRMWARE_FILE=skl_dmc_ver1_26.bin
+echo "Adding /lib/firmware/i915/${FIRMWARE_FILE}"
+mkdir -p ${DESTDIR}/lib/firmware/i915 || true
+cp -a /lib/firmware/i915/${FIRMWARE_FILE} ${DESTDIR}/lib/firmware/i915/

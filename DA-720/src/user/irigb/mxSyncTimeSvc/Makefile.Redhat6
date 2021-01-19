@@ -1,0 +1,11 @@
+
+install:
+	echo "Installed for Redhat/CentOS 6"
+	install mx_irigb.sh  $(DESTDIR)/etc/init.d/
+	chkconfig --levels 2345 mx_irigb.sh on
+
+uninstall:
+	echo "Uninstalled for Redhat/CentOS 6"
+	chkconfig --levels 2345 mx_irigb.sh off
+	-/bin/rm -rf $(DESTDIR)/etc/init.d/mx_irigb.sh
+

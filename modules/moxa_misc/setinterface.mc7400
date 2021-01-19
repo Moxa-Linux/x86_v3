@@ -1,0 +1,82 @@
+#!/bin/bash
+
+
+function check_root_user() {
+    if [ x"$(whoami)" != x"root" ]; then
+        echo "Permission denied."
+        exit -3
+    fi
+}
+
+usage() {
+    echo -ne "Usage: /usr/bin/setinterface device-node [interface-no]\n"
+    echo -ne "\tdevice-node     - /dev/ttySn, n = 0, 1, ... . \n"
+    echo -ne "\tinterface-no    - following:\n"
+    echo -ne "\tnone - to view now setting\n"
+    echo -ne "\t0 - set to RS232 interface\n"
+    echo -ne "\t1 - set to RS485-2WIRES interface\n"
+    echo -ne "\t2 - set to RS422 or RS485-4WIRES interface\n"
+    echo -ne "\n"
+    exit -4
+}
+
+if [ x"$1" == x"-h" ]; then
+    usage
+fi
+
+check_root_user
+
+if [ x"$1" == x"/dev/ttyS0" ]; then
+    port="1"
+elif [ x"$1" == x"/dev/ttyS1" ]; then
+    port="2"
+elif [ x"$1" == x"/dev/ttyS2" ]; then
+    port="3"
+elif [ x"$1" == x"/dev/ttyS3" ]; then
+    port="4"
+else
+
+    if [ -f "/usr/bin/setinterface" ]; then
+        /usr/bin/setinterface $1 $2
+    else
+        usage
+    fi
+fi
+
+#
+# Note: Check the number of ports by product name.
+# If the model name is MC-1100 (MC-1111 and MC-1121) or MC-1112: the number of serial ports should not over 2.
+# We will show the information. This model only supports two serial ports in this model.
+#
+
+#PRODUCT_NAME="MC-`cat /sys/class/dmi/id/board_name|cut -f2 -d-`"
+
+
+if [ -z "$2" ]; then
+
+    if [ x"1" == x"$(cat /sys/class/gpio/uart${port}_232/value)" ]; then
+        echo Now setting is RS232 interface.
+    elif [ x"1" == x"$(cat /sys/class/gpio/uart${port}_485/value)" ]; then
+        echo Now setting is RS485-2WIRES interface.
+    elif [ x"1" == x"$(cat /sys/class/gpio/uart${port}_422/value)" ]; then
+        echo Now setting is RS422 or RS485-4WIRES interface.
+    fi
+
+    exit 0
+
+elif [ x"$2" == x"0" ]; then
+    echo 1 > /sys/class/gpio/uart${port}_232/value 2>/dev/null
+elif [ x"$2" == x"1" ]; then
+    echo 1 > /sys/class/gpio/uart${port}_485/value 2>/dev/null
+elif [ x"$2" == x"2" ]; then
+    echo 1 > /sys/class/gpio/uart${port}_422/value 2>/dev/null
+elif [ x"$2" == x"3" ]; then
+    echo 1 > /sys/class/gpio/uart${port}_422/value 2>/dev/null
+else
+    if [ -f "/usr/bin/setinterface" ]; then
+        /usr/bin/setinterface $1 $2
+    else
+        usage
+    fi
+fi
+

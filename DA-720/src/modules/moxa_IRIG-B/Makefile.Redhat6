@@ -1,0 +1,11 @@
+
+install:
+	echo "Installed for Redhat/CentOS 6"
+	:> $(DESTDIR)/etc/sysconfig/modules/$(TARGET_MODULE).modules
+	echo "#!/bin/sh" >> $(DESTDIR)/etc/sysconfig/modules/$(TARGET_MODULE).modules
+	echo "modprobe $(TARGET_MODULE)" >> $(DESTDIR)/etc/sysconfig/modules/$(TARGET_MODULE).modules
+	chmod a+x $(DESTDIR)/etc/sysconfig/modules/$(TARGET_MODULE).modules
+
+uninstall:
+	echo "Uninstalled for Redhat/CentOS 6"
+	-/bin/rm -rf $(DESTDIR)/etc/sysconfig/modules/$(TARGET_MODULE).modules
