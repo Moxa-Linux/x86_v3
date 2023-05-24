@@ -1,0 +1,95 @@
+#!/bin/bash
+
+function check_root_user() {
+    if [ x"$(whoami)" != x"root" ]; then
+        echo "Permission denied."
+        exit -3
+    fi
+}
+
+
+if [ x"$1" == x"/dev/ttyS0" ]; then
+    case "$2" in
+        0)
+            check_root_user
+            echo 1 > /sys/class/gpio/uart1_232/value 2>/dev/null
+            exit 0
+            ;;
+        1)
+            check_root_user
+            echo 1 > /sys/class/gpio/uart1_485/value 2>/dev/null
+            exit 0
+            ;;
+        2)
+            check_root_user
+            echo 1 > /sys/class/gpio/uart1_422/value 2>/dev/null
+            exit 0
+            ;;
+        3)
+            check_root_user
+            echo 1 > /sys/class/gpio/uart1_422/value 2>/dev/null
+            exit 0
+            ;;
+        *)
+            if [ x"1" == x"$(cat /sys/class/gpio/uart1_232/value)" ]; then
+                echo Now setting is RS232 interface.
+                exit 0
+            elif [ x"1" == x"$(cat /sys/class/gpio/uart1_485/value)" ]; then
+                echo Now setting is RS485 interface.
+                exit 0
+            elif [ x"1" == x"$(cat /sys/class/gpio/uart1_422/value)" ]; then
+                echo Now setting is RS422 interface.
+                exit 0
+            fi
+    esac
+elif [ x"$1" == x"/dev/ttyS1" ]; then
+    case "$2" in
+        0)
+            check_root_user
+            echo 1 > /sys/class/gpio/uart2_232/value 2>/dev/null
+            exit 0
+            ;;
+        1)
+            check_root_user
+            echo 1 > /sys/class/gpio/uart2_485/value 2>/dev/null
+            exit 0
+            ;;
+        2)
+            check_root_user
+            echo 1 > /sys/class/gpio/uart2_422/value 2>/dev/null
+            exit 0
+            ;;
+        3)
+            check_root_user
+            echo 1 > /sys/class/gpio/uart2_422/value 2>/dev/null
+            exit 0
+            ;;
+        *)
+            if [ x"1" == x"$(cat /sys/class/gpio/uart2_232/value)" ]; then
+                echo Now setting is RS232 interface.
+                exit 0
+            elif [ x"1" == x"$(cat /sys/class/gpio/uart2_485/value)" ]; then
+                echo Now setting is RS485 interface.
+                exit 0
+            elif [ x"1" == x"$(cat /sys/class/gpio/uart2_422/value)" ]; then
+                echo Now setting is RS422 interface.
+                exit 0
+            fi
+    esac
+fi
+
+if [ -f "/usr/bin/setinterface" ]; then
+    /usr/bin/setinterface $1 $2
+else
+    echo -ne "Usage: /usr/bin/setinterface device-node [interface-no]\n"
+    echo -ne "\tdevice-node     - /dev/ttyS0 ~ /dev/ttyS1\n"
+    echo -ne "\tinterface-no    - following:\n"
+    echo -ne "\tnone - to view now setting\n"
+    echo -ne "\t0 - set to RS232 interface\n"
+    echo -ne "\t1 - set to RS485-2WIRES interface\n"
+    echo -ne "\t2 - set to RS422 interface\n"
+    echo -ne "\n"
+fi
+
+
+

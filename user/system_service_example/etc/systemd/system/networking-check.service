@@ -1,0 +1,8 @@
+[Unit]
+After=snmpd.service
+
+[Service]
+ExecStart=/usr/local/bin/networking-check.sh
+
+[Install]
+WantedBy=default.target

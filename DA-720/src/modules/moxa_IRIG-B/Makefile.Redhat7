@@ -1,0 +1,9 @@
+
+install:
+	echo "Installed for Redhat/CentOS 7"
+	[ -d $(DESTDIR)/etc/modules-load.d ] || mkdir -p $(DESTDIR)/etc/modules-load.d
+	[ -f $(DESTDIR)/etc/modules-load.d/moxa_irigb.conf ] && grep -q $(TARGET_MODULE) $(DESTDIR)/etc/modules-load.d/moxa_irigb.conf || echo "$(TARGET_MODULE)" >> $(DESTDIR)/etc/modules-load.d/moxa_irigb.conf
+
+uninstall:
+	echo "Uninstalled for Redhat/CentOS 7"
+	rm -rf $(DESTDIR)/etc/modules-load.d/moxa_irigb.conf

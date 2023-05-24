@@ -1,0 +1,5 @@
+Version: 1.26
+Date   : 02/01/2016
+Notes:
+Following additions from ver1.26
+1. WA for NV12 flicker issues. Fixed HTP for restore program

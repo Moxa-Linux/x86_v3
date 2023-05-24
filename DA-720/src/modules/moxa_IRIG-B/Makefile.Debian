@@ -1,0 +1,8 @@
+
+install:
+	echo "Installed for Debian/Ubuntu"; \
+	grep -q $(TARGET_MODULE) $(DESTDIR)/etc/modules  || echo "$(TARGET_MODULE)" >> $(DESTDIR)/etc/modules
+
+uninstall:
+	echo "Uninstalled for Debian/Ubuntu"; \
+	sed -i '/$(TARGET_MODULE)/d' $(DESTDIR)/etc/modules

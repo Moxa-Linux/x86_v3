@@ -1,0 +1,23 @@
+#! /bin/bash
+
+remove_unused_ttyM() {
+    local mxser_pci_count=$(lspci -d 1393:1180 | wc -l)
+
+    for (( i=$((${mxser_pci_count}*8)); i<=32; i++ )); do
+        rm -f /dev/ttyM$i
+    done
+}
+
+case "$1" in
+    start)
+        remove_unused_ttyM
+        ;;
+    stop)
+        ;;
+    *)
+        echo "Usage: $0 start|stop" >&2
+        exit 3
+        ;;
+esac
+
+

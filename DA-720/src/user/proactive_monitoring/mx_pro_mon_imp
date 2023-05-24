@@ -1,0 +1,363 @@
+#!/bin/bash
+#
+# The program is Hardware Abstraction Layer for Moxa proactive monitoring.
+#
+# Usage: command function_name arg1..argN
+#
+# Copyright (C) MOXA Inc. All rights reserved.
+#
+# History:
+#  2016/08/03 Holsety Chen <holsety.chen@moxa.com>
+#    First created. According to C file form mx_pro_mon.c
+#
+
+#
+# Section: Functions
+#
+
+function get_kervison() {
+if test -f kversion; then
+  kversion | awk '{print $1}'
+else
+  echo ""
+fi
+}
+
+function dmi_query() {
+  local output=""
+  if test -d /sys/class/dmi/id; then
+    cat /sys/class/dmi/id/$1
+  elif test dmidecode; then
+    dmidecode -s $2
+  else
+    return
+  fi
+}
+
+function sensor_query() {
+  if test sensors; then
+    sensors -u | grep -A1 "$1:"| tail -n 1 | awk '{printf $2}'
+  else
+    return
+  fi
+}
+
+MX_ETH_INFO_PATH=/dev/shm/mx_eth_nodes
+function get_eth_node_fn() {
+  if ! test -f $MX_ETH_INFO_PATH ; then
+    #TODO: the network node name may not eth only...
+    ifconfig | grep eth | awk '{print $1}' >$MX_ETH_INFO_PATH
+  fi
+}
+
+function get_eth_count_fn() {
+  get_eth_node_fn
+  cat $MX_ETH_INFO_PATH | wc -l
+}
+
+function get_eth_status_fn() {
+  if [ x"" == x"$1" ]; then
+    return
+  fi
+
+  if [ x"" == x"$2" ]; then
+    return
+  fi
+
+  get_eth_node_fn
+  local eth_count=$(cat $MX_ETH_INFO_PATH | wc -l)
+  local eth_index=$(($1+1))
+
+  if [ "$1" -gt "$eth_count" ]; then
+    return
+  fi
+
+  local eth_dev=$(head -$eth_index $MX_ETH_INFO_PATH | tail -1)
+
+  if [ x"$2" == x"name" ]; then
+    echo $eth_dev
+  fi
+
+  if [ ! -f "/sys/class/net/$eth_dev/operstate" ]; then
+      exit 1
+  fi
+  if [ x"down" == x"$(cat /sys/class/net/$eth_dev/operstate)" ]; then
+      echo 0;
+      return
+  fi
+
+  if [ x"$2" == x"usage" ]; then
+    if [ ! -f "/usr/bin/ifstat" ]; then
+      exit 1
+    fi
+    ifstat -b -q -i $eth_dev 0.1 1 | tail -1 | awk '{ print $1+$2 }'
+    return
+  fi
+
+  if [ ! -f "/sys/class/net/$eth_dev/$2" ]; then
+    exit 1
+  fi
+  cat /sys/class/net/$eth_dev/$2
+}
+
+MX_UART_INFO_PATH=/dev/shm/mx_uart_nodes
+function get_uart_node_fn() {
+  if ! test -f $MX_UART_INFO_PATH ; then
+    for ((n=0;n<32;n++)); do
+      ls /dev/ttyS$n 1>/dev/null 2>/dev/null
+      if [ $? != 0 ]; then break; fi
+      echo "/dev/ttyS$n" >>$MX_UART_INFO_PATH
+    done
+    for ((n=0;n<32;n++)); do
+      ls /dev/ttyM$n 1>/dev/null 2>/dev/null
+      if [ $? != 0 ]; then break; fi
+      echo "/dev/ttyM$n" >>$MX_UART_INFO_PATH
+    done
+    for ((n=0;n<32;n++)); do
+      ls /dev/ttyMI$n 1>/dev/null 2>/dev/null
+      if [ $? != 0 ]; then break; fi
+      echo "/dev/ttyMI$n" >>$MX_UART_INFO_PATH
+    done
+  fi
+}
+
+function get_uart_count_fn() {
+  get_uart_node_fn
+  cat $MX_UART_INFO_PATH | wc -l
+}
+
+function get_uart_status_fn() {
+  if [ x"" == x"$1" ]; then
+    return
+  fi
+
+  get_uart_node_fn
+  local uart_count=$(cat $MX_UART_INFO_PATH | wc -l)
+  local uart_index=$(($1+1))
+
+  if [ "$1" -gt "$uart_count" ]; then
+    return
+  fi
+
+  local uart_dev=$(head -$uart_index $MX_UART_INFO_PATH | tail -1)
+
+  if [ x"name" == x"$2" ]; then
+    echo $uart_dev
+    return
+  fi
+
+  if [ x"" != x"$(lsof $uart_dev 2>/dev/null)" ]; then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
+function get_pwr_status_fn() {
+  local idx=$(($1+1))
+  if test -d /sys/class/gpio/pwrin$idx; then
+    cat /sys/class/gpio/pwrin$idx/value
+  fi
+}
+
+function set_relay_fn() {
+  local idx=$(($1+1))
+  local val="0"
+  if test -d /sys/class/gpio/relay$idx; then
+    if [ x"0" != x"$2" ]; then val="1"; fi
+    echo $val > /sys/class/gpio/relay$idx/value
+  fi
+}
+
+function send_snmptrap_fn() {
+  SNMPCONF_PATH=/etc/snmp/snmpd.conf
+  SNMPTRAP_EN=$(cat $SNMPCONF_PATH | grep trap2sink | awk '{ print $1 }')
+  if [ x"trap2sink" != x"$SNMPTRAP_EN" ]; then
+    exit 0
+  fi
+
+  SNMPTRAP_IP=$(cat $SNMPCONF_PATH | grep trap2sink | awk '{ print $2 }')
+  if [ x"" == x"$SNMPTRAP_IP" ]; then
+    SNMPTRAP_IP="127.0.0.1"
+  fi
+
+  SNMPTRAP_COMMUNITY=$(cat $SNMPCONF_PATH | grep trap2sink | awk '{ print $3 }')
+  if [ x"" == x"$SNMPTRAP_COMMUNITY" ]; then
+    SNMPTRAP_COMMUNITY="public"
+  fi
+
+  MX_ALERT_OID=".1.3.6.1.4.1.8691.17.2.7"
+  if [ x"$1" == x"cpu_usage" ]; then
+      ALERT_SRC_OID=".1.3.6.1.4.1.8691.17.2.1.2"
+  elif [ x"$1" == x"cpu_temp" ]; then
+      ALERT_SRC_OID=".1.3.6.1.4.1.8691.17.2.1.3"
+  elif [ x"$1" == x"mem_usage" ]; then
+      ALERT_SRC_OID=".1.3.6.1.4.1.8691.17.2.2.1"
+  elif [ x"$1" == x"disk_usage" ]; then
+      ALERT_SRC_OID=".1.3.6.1.4.1.8691.17.2.3.1.1.3."$2
+  elif [ x"$1" == x"power_ind" ]; then
+      ALERT_SRC_OID=".1.3.6.1.4.1.8691.17.2.4.1"
+  elif [ x"$1" == x"sys_temp" ]; then
+      ALERT_SRC_OID=".1.3.6.1.4.1.8691.17.2.4.2"
+  elif [ x"$1" == x"eth_link" ]; then
+      ALERT_SRC_OID=".1.3.6.1.4.1.8691.17.2.6.1.1.3"$2
+  else
+      exit 1
+  fi
+
+  snmptrap -v 2c -c $SNMPTRAP_COMMUNITY $SNMPTRAP_IP "" $MX_ALERT_OID $ALERT_SRC_OID $3 $4 1>/dev/null 2>/dev/null
+}
+
+function get_cpu_usage_fn() {
+  MX_CPU_USAGE_PATH=/dev/shm/mx_cpu_usage
+  local temp1=""
+  local temp2=""
+  cat /proc/stat | grep "cpu" > "$MX_CPU_USAGE_PATH"_prev
+  sleep 1
+  cat /proc/stat | grep "cpu" > "$MX_CPU_USAGE_PATH"_curr
+
+  local line_count=0
+  cat "$MX_CPU_USAGE_PATH"_prev | while read a; do
+    line_count=$(($line_count+1))
+    temp1=$(echo $a | awk '{print $5" "($2+$3+$4+$5+$6+$7+$8)}')
+    temp2=$(cat "$MX_CPU_USAGE_PATH"_curr | head -$line_count | tail -1 | awk '{print $5" "($2+$3+$4+$5+$6+$7+$8)}')
+    echo -n $(echo "$temp1 $temp2" | awk '{print 100-(($3-$1)/($4-$2)*100)}')" "
+  done
+  echo
+}
+
+#
+# Section Main Program
+#
+#
+# Arg1: function name
+# Arg2~n: argument for function
+#
+
+
+#
+# No argument input
+#
+if [ "$#" -eq 0 ]; then
+  exit 1
+fi
+
+#
+#
+#
+case "$1" in
+  get_cpu_usage_all)
+    get_cpu_usage_fn
+;;
+  get_average_cpu_usage)
+    get_cpu_usage_fn | awk '{print $1}'
+;;
+  get_cpu_usage)
+    if [ x"$2" == x"" ]; then exit 1; fi
+    get_cpu_usage_fn | cut -f$(($2+2)) -d' '
+;;
+  get_cpu_count)
+    nproc
+;;
+  get_mem_usage)
+    free -m | awk 'NR==2{print int($3*100/$2) }'
+;;
+  get_mem_total_size)
+    free -m | awk 'NR==2{print $2}'
+;;
+  get_mem_avail_size)
+    free -m | awk 'NR==2{printf $4}'
+;;
+  get_uart_count)
+    get_uart_count_fn
+;;
+  get_uart_name)
+    if [ x"$2" == x"" ]; then exit 1; fi
+    get_uart_status_fn $2 name
+;;
+  get_uart_status)
+    if [ x"$2" == x"" ]; then exit 1; fi
+    get_uart_status_fn $2
+;;
+  get_eth_count)
+    get_eth_count_fn
+;;
+  get_eth_name)
+    get_eth_status_fn $2 name
+;;
+  get_eth_speed)
+    get_eth_status_fn $2 speed
+;;
+  get_eth_link)
+    get_eth_status_fn $2 carrier
+;;
+  get_eth_usage)
+    get_eth_status_fn $2 usage
+;;
+  get_disk_usage)
+    if [ x"$2" == x"" ]; then exit 1; fi
+    df -P -BM | grep -vE '^Filesystem|rootfs|tmpfs|cdrom' | grep $2\
+ | awk '{ print $5 }' | sed '$ s/.$//'
+;;
+  get_disk_total_size)
+    if [ x"$2" == x"" ]; then exit 1; fi
+    df -P -BM | grep -vE '^Filesystem|rootfs|tmpfs|cdrom' | grep $2\
+ | awk '{ print $2 }'
+;;
+  get_disk_avail_size)
+    if [ x"$2" == x"" ]; then exit 1; fi
+    df -P -BM | grep -vE '^Filesystem|rootfs|tmpfs|cdrom' | grep $2\
+ | awk '{ print $4 }'
+;;
+  get_pwr_status)
+    if [ x"$2" == x"" ]; then exit 1; fi
+    get_pwr_status_fn $2
+;;
+  set_relay)
+    if [ x"$2" == x"" ]; then exit 1; fi
+    if [ x"$3" == x"" ]; then exit 1; fi
+    set_relay_fn $2 $3
+;;
+  get_device_name)
+    dmi_query "product_name" "system-product-name"
+;;
+  get_bios_ver)
+    dmi_query "bios_version" "bios-version"
+;;
+  get_ser_num)
+    dmi_query "board_serial" "baseboard-serial-number"
+;;
+  get_temperature)
+    if [ x"$2" == x"" ]; then
+      exit 1;
+    fi
+    if [ x"$2" == x"0" ]; then
+      printf "%.0f\n" $(sensor_query "Physical id 0")
+    elif [ x"$2" == x"1" ]; then
+      printf "%.0f\n" $(sensor_query "SYSTEM")
+    else
+      exit 1
+    fi
+;;
+  get_milli_volt)
+    if [ x"$2" == x"" ]; then exit 1; fi
+    if [ x"$2" == x"0" ]; then
+      sensor_query "V_CPU" | awk '{ printf $1*1000"\n" }'
+    elif [ x"$2" == x"1" ]; then
+      sensor_query "V_DRAM" | awk '{ printf $1*1000"\n" }'
+    elif [ x"$2" == x"2" ]; then
+      sensor_query "V5.0" | awk '{ printf $1*1000"\n" }'
+    else exit 1
+    fi
+;;
+  send_snmptrap)
+    # Argument-> $2:"alert device" $3:"argument" $4:"value type" $5"value"
+    # Example-> diskusage /dev/sda1 i 90
+    if [ "$#" -le 4 ]; then
+      exit 1
+    fi
+
+    send_snmptrap_fn $2 $3 $4 $5
+esac
+
+exit 0

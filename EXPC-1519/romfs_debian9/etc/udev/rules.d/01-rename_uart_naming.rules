@@ -1,0 +1,2 @@
+# The UART port order is reserve, we use this rule to swap /dev/ttyS0 and /dev/ttyS1
+KERNEL=="ttyS0", RUN+="/bin/bash -c '/bin/mv /dev/ttyS0 /dev/ttyStmp0 ; /bin/mv /dev/ttyS1 /dev/ttyS0; /bin/mv /dev/ttyStmp0 /dev/ttyS1'"

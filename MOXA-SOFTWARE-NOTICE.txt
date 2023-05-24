@@ -1,0 +1,34 @@
+MOXA SOFTWARE NOTICE
+
+copyright (c) 2021 Moxa Inc. All rights reserved.
+
+This software (¡§Software¡¨) is copyrighted and owned by Moxa Inc., or any of its
+affiliates (collectively referred to as ¡§Moxa").
+
+Unless otherwise provided herein or agreed by Moxa, you shall not (a) modify,
+distribute, alter, tamper with, repair, or otherwise create derivative works of
+the Software, (b) reverse engineer, disassemble, or decompile the Software or
+apply any other process or procedure to derive the source code of the Software,
+or (c) resell, sublicense, assign, or otherwise transfer the Software or related
+documentation. Some software (including machine images), data, text, audio, 
+video or images may be provided to you under a separate license (¡§Third-Party
+Content¡¨), such as the Apache License, Version 2.0, or other open source 
+license. In the event of a conflict between this MOXA SOFTWARE LICENSE and any
+separate license, the separate license will prevail with respect to such 
+Third-Party Content that is the subject of such separate license.
+
+LIMITED WARRANTY. THE SOFTWARE IS PROVIDED ¡§AS IS.¡¨ EXCEPT TO THE EXTENT 
+PROHIBITED BY LAW, OR TO THE EXTENT ANY STATUTORY RIGHTS APPLY THAT CANNOT BE
+EXCLUDED, LIMITED OR WAIVED. MOXA (A) MAKES NO REPRESENTATIONS OR WARRANTIES OF
+ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHERWISE REGARDING THE SOFTWARE,
+AND (B) DISCLAIMS ALL WARRANTIES, INCLUDING ANY IMPLIED OR EXPRESS WARRANTIES 
+(I) OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A PARTICULAR PURPOSE,
+NON-INFRINGEMENT, OR QUIET ENJOYMENT, (II) ARISING OUT OF ANY COURSE OF DEALING 
+OR USAGE OF TRADE, AND (III) THAT THE SOFTWARE WILL BE UNINTERRUPTED, ERROR FREE
+OR FREE OF HARMFUL COMPONENTS.
+
+LIMITATION OF LIABILITY. MOXA WILL NOT BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, CONSEQUENTIAL OR EXEMPLARY DAMAGES (INCLUDING DAMAGES FOR 
+LOSS OF PROFITS, REVENUES, CUSTOMERS, OPPORTUNITIES, GOODWILL, USE, OR DATA), EVEN
+IF A PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. THE LIMITATIONS IN
+THIS SECTION APPLY ONLY TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW.

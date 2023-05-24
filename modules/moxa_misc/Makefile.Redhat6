@@ -1,0 +1,26 @@
+
+install:
+	echo "Installed for Redhat/CentOS 6/7"
+	pidof systemd && systemctl enable mx_gpio_export.service || echo "The mx_gpio_export.service cannot support in your system becasue it doesn't have systemd"
+	[ -d $(DESTDIR)/etc/modprobe.d ] || mkdir -p $(DESTDIR)/etc/modprobe.d
+	[ -f $(DESTDIR)/etc/modprobe.d/iTCO-blacklist.conf ] || ( echo "blacklist wdat_wdt" > $(DESTDIR)/etc/modprobe.d/iTCO-blacklist.conf; \
+	echo "blacklist iTCO_wdt" > $(DESTDIR)/etc/modprobe.d/iTCO-blacklist.conf; \
+	echo "blacklist iTCO_vendor_support" >> $(DESTDIR)/etc/modprobe.d/iTCO-blacklist.conf; \
+	echo "blacklist 8250_fintek" >> $(DESTDIR)/etc/modprobe.d/iTCO-blacklist.conf;\
+	)
+	[ -d $(DESTDIR)/etc/modules-load.d ] || mkdir -p $(DESTDIR)/etc/modules-load.d
+	[ -f $(DESTDIR)/etc/modules-load.d/moxa-misc.conf ] && grep -q $(TARGET_MODULE) $(DESTDIR)/etc/modules-load.d/moxa-misc.conf  || ( echo "it87_wdt" >> $(DESTDIR)/etc/modules-load.d/moxa-misc.conf; \
+	echo "$(TARGET_MODULE)" >> $(DESTDIR)/etc/modules-load.d/moxa-misc.conf; \
+	)
+
+uninstall:
+	echo "Uninstalled for Redhat/CentOS 6/7"
+	rm -rf $(DESTDIR)/etc/modules-load.d/moxa-misc.conf
+	[ -f $(DESTDIR)/etc/modprobe.d/iTCO-blacklist.conf ] && -/bin/rm -rf $(DESTDIR)/etc/modprobe.d/iTCO-blacklist.conf || echo "$(DESTDIR)/etc/modprobe.d/iTCO-blacklist.conf doesn't exist"
+	pidof systemd && systemctl disable mx_gpio_export.service || echo "Not need to disable the mx_gpio_export.service"
+	-/bin/rm -rf $(DESTDIR)/lib/modules/$(KERNEL_VERSION)/kernel/drivers/misc/$(TARGET_MODULE).ko \
+	$(DESTDIR)/usr/local/bin/setinterface \
+	$(DESTDIR)/sbin/mx_gpio_export \
+	$(DESTDIR)/lib/systemd/system/mx_gpio_export.service
+
+	#-/bin/rm -rf $(DESTDIR)/etc/sysconfig/modules/$(TARGET_MODULE).modules

@@ -1,0 +1,143 @@
+Reference the repository in github
+https://github.com/Moxa-Linux/x86_v3
+Following are the device drivers need to install for DA-720/682B
+
+	modules/moxa_misc	- The DA-720/682B need to install this device driver for DIO, LED, ...
+	DA-720/src/modules/moxa_da720_mxser	- The old serial port device driver for Debian 8
+	DA-682B-TCC/src/modules/mxser	- The old serial port device driver for Debian 9, 10
+	DA-720/src/modules/moxa_IRIG-B	- IRIG-B only used in NART customized project. It unnecessary to install in this project.
+	DA-720/src/modules/moxa_it87_wdt	- The DA-720/682B need to install this device driver for watchdog
+
+	DA-720/src/user/mxhsrprp	- It unnecessary to install in this project.
+	DA-720/src/user/irigb	-  IRIG-B only used in NART customized project. It unnecessary to install in this project.
+
+Install the developping tool before making the device driver.
+
+$ apt-get install git build-essential gcc-multilib  g++-multilib libc6-dev libi2c-dev gcc-multilib linux-headers-`uname -r`
+
+$ git clone git@gitlab.com:jared_wu/x86_v3.git
+
+1. Install the latest multiport serial board device driver.
+	
+	The latest device driver is availabe from Moxa' multiport serial board
+	https://www.moxa.com/en/products/industrial-edge-connectivity/multiport-serial-boards/pcie-upci-pci-serial-cards/cp-168u-series#resources
+	$ wget https://cdn-cms.azureedge.net/getmedia/37743d00-2d66-446d-9208-ff444ac56b04/moxa-msb-pci-express-universal-pci-boards-linux-kernel-5.x.x-driver-v5.2.tgz
+	$ tar -xzvf  moxa-msb-pci-express-universal-pci-boards-linux-kernel-5.x.x-driver-v5.2.tgz
+	$ cd mxser
+	$ make
+	$ make install
+
+2. Install the watchdog device driver
+	
+	$ cd /var/DA-720/src/modules/moxa_it87_wdt/
+	$ make
+	$ make install
+	Making modules it8786_wdt.ko ...
+	make -C /lib/modules/5.10.0-21-amd64/build M=/var/x86_v3/DA-720/src/modules/moxa_it87_wdt modules
+	make[1]: Entering directory '/usr/src/linux-headers-5.10.0-21-amd64'
+	make[1]: Leaving directory '/usr/src/linux-headers-5.10.0-21-amd64'
+	mkdir -v -p "/lib/modules/5.10.0-21-amd64/kernel/drivers/watchdog" 
+	install it8786_wdt.ko 	/lib/modules/5.10.0-21-amd64/kernel/drivers/watchdog/
+
+	Reference:
+	https://github.com/Moxa-Linux/x86_v3/tree/master/DA-720/src/modules/moxa_it87_wdt
+
+3. Install the Moxa misc driver for accessing the relay/DI/DO, on board uart interface and programable LED control in DA-720/DA-682B.
+
+	$ cd /var/x86_v3/modules/moxa_misc
+
+	You should configure the CONFIG_PRODUCT as da720 in Makefile before making this driver.
+	
+	$ vi Makefile
+	#CONFIG_PRODUCT?=mpc21xx
+	#CONFIG_PRODUCT?=mc1100
+	#CONFIG_PRODUCT?=expc1519
+	CONFIG_PRODUCT?=da720
+	#CONFIG_PRODUCT?=mc7200
+	#CONFIG_PRODUCT?=mc7400
+
+	root@Bulleyes:/var/x86_v3/modules/moxa_misc# make
+	Making modules misc-moxa-da720.ko ...
+	make -C /lib/modules/`uname -r`/build M=`pwd` modules
+	make[1]: Entering directory '/usr/src/linux-headers-5.10.0-23-amd64'
+	  CC [M]  /var/x86_v3/modules/moxa_misc/misc-moxa-da720.o
+	  MODPOST /var/x86_v3/modules/moxa_misc/Module.symvers
+	  CC [M]  /var/x86_v3/modules/moxa_misc/misc-moxa-da720.mod.o
+	  LD [M]  /var/x86_v3/modules/moxa_misc/misc-moxa-da720.ko
+	make[1]: Leaving directory '/usr/src/linux-headers-5.10.0-23-amd64'
+	root@Bulleyes:/var/x86_v3/modules/moxa_misc# make install
+	mkdir -v -p "/lib/modules/`uname -r`/kernel/drivers/misc"
+	install misc-moxa-da720.ko "/lib/modules/`uname -r`/kernel/drivers/misc"
+	depmod -a
+	mkdir -v -p "/usr/local/bin"
+	install setinterface.da720 /usr/local/bin/setinterface
+	mkdir -v -p "/sbin"
+	install mx_gpio_export /sbin/
+	mkdir -v -p "/lib/systemd/system"; \
+	install mx_gpio_export.service /lib/systemd/system/; \
+	
+	if [ -f "/etc/redhat-release" ]; then \
+	        grep -q "release 7" /etc/redhat-release && make -f Makefile.Redhat7 install || echo "Sorry! It's not supported in this distribution"; \
+	elif [ -f "/etc/debian_version" ]; then \
+	        make -f Makefile.Debian install; \
+	fi
+	make[1]: Entering directory '/var/x86_v3/modules/moxa_misc'
+	echo "Installed for Debian/Ubuntu"
+	Installed for Debian/Ubuntu
+	pidof systemd && systemctl enable mx_gpio_export.service || echo "The mx_gpio_export.service cannot support in your system becasue it doesn't have systemd"
+	786
+	Created symlink /etc/systemd/system/multi-user.target.wants/mx_gpio_export.service ¡÷ /lib/systemd/system/mx_gpio_export.service.
+	[ -d /lib/modprobe.d ] || mkdir -p /lib/modprobe.d
+	[ -f /lib/modprobe.d/it87_wdt.conf ] || echo "options it87_wdt nocir=1" > /lib/modprobe.d/it87_wdt.conf
+	[ -f /lib/modprobe.d/iTCO-blacklist.conf ] || ( echo "blacklist iTCO_wdt" > /lib/modprobe.d/iTCO-blacklist.conf; \
+	echo "blacklist iTCO_vendor_support" >> /lib/modprobe.d/iTCO-blacklist.conf; \
+	echo "blacklist 8250_fintek" >> /lib/modprobe.d/iTCO-blacklist.conf;\
+	)
+	[ -d /etc ] || mkdir -p /etc
+	[ -f /etc/modules ] && grep -q misc-moxa-da720 /etc/modules  || echo "misc-moxa-da720" >> /etc/modules
+	make[1]: Leaving directory '/var/x86_v3/modules/moxa_misc'
+
+
+	root@Bulleyes:/var/x86_v3/modules/moxa_misc# make install
+	mkdir -v -p "/lib/modules/`uname -r`/kernel/drivers/misc"
+	install misc-moxa-da720.ko "/lib/modules/`uname -r`/kernel/drivers/misc"
+	depmod -a
+	mkdir -v -p "/usr/local/bin"
+	install setinterface.da720 /usr/local/bin/setinterface
+	mkdir -v -p "/sbin"
+	install mx_gpio_export /sbin/
+	mkdir -v -p "/lib/systemd/system"; \
+	install mx_gpio_export.service /lib/systemd/system/; \
+	
+	if [ -f "/etc/redhat-release" ]; then \
+	        grep -q "release 7" /etc/redhat-release && make -f Makefile.Redhat7 	install || echo "Sorry! It's not supported in this distribution"; \
+	elif [ -f "/etc/debian_version" ]; then \
+	        make -f Makefile.Debian install; \
+	fi
+	make[1]: Entering directory '/var/x86_v3/modules/moxa_misc'
+	echo "Installed for Debian/Ubuntu"
+	Installed for Debian/Ubuntu
+	pidof systemd && systemctl enable mx_gpio_export.service || echo "The mx_gpio_export.service cannot support in your system becasue it doesn't have systemd"
+	786
+	[ -d /lib/modprobe.d ] || mkdir -p /lib/modprobe.d
+	[ -f /lib/modprobe.d/it87_wdt.conf ] || echo "options it87_wdt nocir=1" > /lib/modprobe.d/it87_wdt.conf
+	[ -f /lib/modprobe.d/iTCO-blacklist.conf ] || ( echo "blacklist iTCO_wdt" > /lib/modprobe.d/iTCO-blacklist.conf; \
+	echo "blacklist iTCO_vendor_support" >> /lib/modprobe.d/iTCO-blacklist.conf; \
+	echo "blacklist 8250_fintek" >> /lib/modprobe.d/iTCO-blacklist.conf;\
+	)
+	[ -d /etc ] || mkdir -p /etc
+	[ -f /etc/modules ] && grep -q misc-moxa-da720 /etc/modules  || echo "misc-moxa-da720" >> /etc/modules
+	make[1]: Leaving directory '/var/x86_v3/modules/moxa_misc'
+
+	Reference:
+	https://github.com/Moxa-Linux/x86_v3/tree/master/modules/moxa_misc
+
+4. Configure /etc/modules to load it87.ko, it8786_wdt.ko, mxser.ko
+
+	$ vi /etc/modules
+	it87
+	it8786_wdt
+	mxser
+	misc-moxa-da720
+
+

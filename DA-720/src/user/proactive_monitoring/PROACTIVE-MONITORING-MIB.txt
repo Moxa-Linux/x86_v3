@@ -1,0 +1,554 @@
+
+	PROACTIVE-MONITORING-MIB DEFINITIONS ::= BEGIN
+ 
+		IMPORTS
+			enterprises, Integer32, Counter32, OBJECT-TYPE, MODULE-IDENTITY, 
+			NOTIFICATION-TYPE			
+				FROM SNMPv2-SMI			
+			TEXTUAL-CONVENTION			
+				FROM SNMPv2-TC;
+	
+	
+		-- 1.3.6.1.4.1.8691.17.2
+		proactiveMonitoring MODULE-IDENTITY 
+			LAST-UPDATED "201608261200Z"		-- August 26, 2016 at 12:00 GMT
+			ORGANIZATION 
+				"MOXA SYS."
+			CONTACT-INFO 
+				"Contact-info."
+			DESCRIPTION 
+				"The Proactive Monitoring Utility is built to get system status, send alert notification and provide SNMP agent.
+				The SNMP agent helps customer or operator to easily monitor all system status and generate alert notification without using or writing additional software."
+			REVISION "201604151328Z"		-- April 15, 2016 at 13:28 GMT
+			DESCRIPTION 
+				"MIB Test Version"
+			::= { embeddedComputer 2 }
+
+		
+	
+--
+-- Textual conventions
+--
+	
+		DisplayString ::= TEXTUAL-CONVENTION
+			STATUS current
+			DESCRIPTION 
+				"Description."
+			SYNTAX OCTET STRING
+
+		MBytes ::= TEXTUAL-CONVENTION
+			STATUS current
+			DESCRIPTION 
+				"Description."
+			SYNTAX Integer32 (0..2147483647)
+
+	
+--
+-- Node definitions
+--
+	
+		-- 1.3.6.1.4.1.8691
+		moxa OBJECT IDENTIFIER ::= { enterprises 8691 }
+
+		
+		-- 1.3.6.1.4.1.8691.17
+		embeddedComputer OBJECT IDENTIFIER ::= { moxa 17 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.1
+		cpuInfoMgmt OBJECT IDENTIFIER ::= { proactiveMonitoring 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.1.1
+		cpuLogicCount OBJECT-TYPE
+			SYNTAX Counter32
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The number of CPU logic processor."
+			::= { cpuInfoMgmt 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.1.2
+		cpuTotalUsage OBJECT-TYPE
+			SYNTAX Integer32 (0..100)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current CPU total usage.
+				The ranges of usage from 0(%) to 100(%)."
+			::= { cpuInfoMgmt 2 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.1.3
+		cpuTemperature OBJECT-TYPE
+			SYNTAX Integer32 (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current CPU temperature.
+				The unit of value is 'Celsius'."
+			::= { cpuInfoMgmt 3 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.1.4
+		cpuVoltage OBJECT-TYPE
+			SYNTAX Integer32 (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current CPU voltage.
+				The unit of value is 'mV'."
+			::= { cpuInfoMgmt 4 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.1.5
+		logicProcessorTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF LogicProcessorEntry
+			MAX-ACCESS not-accessible
+			STATUS current
+			DESCRIPTION
+				"This table contains one row per logicProcessorEntry."
+			::= { cpuInfoMgmt 5 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.1.5.1
+		logicProcessorEntry OBJECT-TYPE
+			SYNTAX LogicProcessorEntry
+			MAX-ACCESS not-accessible
+			STATUS current
+			DESCRIPTION
+				"Information about logic processor entry.
+				The entry provides the object(logicProcessorUsage) 
+				to help NMS to get each processor usage information."
+			INDEX { logicProcessorIndex }
+			::= { logicProcessorTable 1 }
+
+		
+		LogicProcessorEntry ::=
+			SEQUENCE { 
+				logicProcessorIndex
+					Integer32,
+				logicProcessorUsage
+					Integer32
+			 }
+
+		-- 1.3.6.1.4.1.8691.17.2.1.5.1.1
+		logicProcessorIndex OBJECT-TYPE
+			SYNTAX Integer32 (1..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"A unique value for each logic processor.
+				The ranges of this value from 1 to the number of 
+				logic processor on the managed device."
+			::= { logicProcessorEntry 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.1.5.1.2
+		logicProcessorUsage OBJECT-TYPE
+			SYNTAX Integer32 (0..100)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current usage of each processor.
+				The ranges of usage from 0(%) to 100(%)."
+			::= { logicProcessorEntry 2 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.2
+		memoryInfoMgmt OBJECT IDENTIFIER ::= { proactiveMonitoring 2 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.2.1
+		memoryUsage OBJECT-TYPE
+			SYNTAX Integer32 (0..100)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current memory usage. 
+				The ranges of usage from 0(%) to 100(%)."
+			::= { memoryInfoMgmt 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.2.2
+		memoryTotalSize OBJECT-TYPE
+			SYNTAX MBytes (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current memory total size.
+				The unit of value is 'MBytes'."
+			::= { memoryInfoMgmt 2 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.2.3
+		memoryAvailableSize OBJECT-TYPE
+			SYNTAX MBytes (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current memory available size.
+				The unit of value is 'MBytes'."
+			::= { memoryInfoMgmt 3 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.2.4
+		dramVoltage OBJECT-TYPE
+			SYNTAX Integer32 (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current DRAM voltage.
+				The unit of value is 'mV'."
+			::= { memoryInfoMgmt 4 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.3
+		partitionInfoMgmt OBJECT IDENTIFIER ::= { proactiveMonitoring 3 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.3.1
+		partitionStatusTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF PartitionStatusEntry
+			MAX-ACCESS not-accessible
+			STATUS current
+			DESCRIPTION
+				"This table contains one row per partitionStatusEntry."
+			::= { partitionInfoMgmt 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.3.1.1
+		partitionStatusEntry OBJECT-TYPE
+			SYNTAX PartitionStatusEntry
+			MAX-ACCESS not-accessible
+			STATUS current
+			DESCRIPTION
+				"Information about the partition status entry.
+				The entry provides object(partitionFriendlyName) to 
+				help NMS search the partition letter information, and 
+				objects(partitionUsage, partitionTotalSize, partitionAvilableSize)
+				to help NMS get the partition usage information."
+			INDEX { partitionStatusIndex }
+			::= { partitionStatusTable 1 }
+
+		
+		PartitionStatusEntry ::=
+			SEQUENCE { 
+				partitionStatusIndex
+					Integer32,
+				partitionFriendlyName
+					OCTET STRING,
+				partitionUsage
+					Integer32,
+				partitionTotalSize
+					MBytes,
+				partitionAvailableSize
+					MBytes
+			 }
+
+		-- 1.3.6.1.4.1.8691.17.2.3.1.1.1
+		partitionStatusIndex OBJECT-TYPE
+			SYNTAX Integer32 (1..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"A unique value for each partition on the managed device.
+				The ranges of this value from 1 to the number of partition 
+				on the managed device."
+			::= { partitionStatusEntry 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.3.1.1.2
+		partitionFriendlyName OBJECT-TYPE
+			SYNTAX OCTET STRING
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The partition friendly name on the managed device.
+				The value of this object should be the drive letter.
+				(e.g., 'C' on the Windows system; 'sda1' on the Linux system)"
+			::= { partitionStatusEntry 2 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.3.1.1.3
+		partitionUsage OBJECT-TYPE
+			SYNTAX Integer32 (0..100)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current usage of each partition.
+				The ranges of usage from 0(%) to 100(%)."
+			::= { partitionStatusEntry 3 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.3.1.1.4
+		partitionTotalSize OBJECT-TYPE
+			SYNTAX MBytes (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current partition total size.
+				The unit of this value is 'MBytes'."
+			::= { partitionStatusEntry 4 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.3.1.1.5
+		partitionAvailableSize OBJECT-TYPE
+			SYNTAX MBytes (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current partition available size.
+				The unit of this value is 'MBytes'."
+			::= { partitionStatusEntry 5 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.4
+		mainboardInfoMgmt OBJECT IDENTIFIER ::= { proactiveMonitoring 4 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.4.1
+		mainboardPowerIndicator OBJECT-TYPE
+			SYNTAX INTEGER
+				{
+				notsupport(0),
+				pwr1(1),
+				pwr2(2),
+				daulpower(3)
+				}
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The mainboard power status.
+				The 'notsupport(0)' is returned when the managed device support the power indicator.
+				The 'pwr1(1)' is returned when only power1 is activated.
+				The 'pwr2(2)' is returned when only power2 is activated. 
+				The 'daulpower(3)' is returned when both power are activated."
+			::= { mainboardInfoMgmt 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.4.2
+		mainboardTemperature OBJECT-TYPE
+			SYNTAX Integer32 (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current mainboard temperature.
+				The unit of value is 'Celsius'."
+			::= { mainboardInfoMgmt 2 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.4.3
+		mainboardVoltage OBJECT-TYPE
+			SYNTAX Integer32 (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The mainboard voltage .
+				The unit of value is 'mV'."
+			::= { mainboardInfoMgmt 3 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.5
+		serialInfoMgmt OBJECT IDENTIFIER ::= { proactiveMonitoring 5 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.5.1
+		serialPortStatusTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF SerialPortStatusEntry
+			MAX-ACCESS not-accessible
+			STATUS current
+			DESCRIPTION
+				"This table contains one row per serialPortStatusEntry."
+			::= { serialInfoMgmt 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.5.1.1
+		serialPortStatusEntry OBJECT-TYPE
+			SYNTAX SerialPortStatusEntry
+			MAX-ACCESS not-accessible
+			STATUS current
+			DESCRIPTION
+				"Information about the serial port status entry.
+				The entry provides object(serialPortFriendlyName) to help 
+				NMS search the serial port friendly name information, and 
+				object(portStatusValue) to help NMS get each serial port 
+				status which is 'In Use' or 'Available'."
+			INDEX { portStatusIndex }
+			::= { serialPortStatusTable 1 }
+
+		
+		SerialPortStatusEntry ::=
+			SEQUENCE { 
+				portStatusIndex
+					Integer32,
+				serialPortFriendlyName
+					OCTET STRING,
+				portStatusValue
+					INTEGER
+			 }
+
+		-- 1.3.6.1.4.1.8691.17.2.5.1.1.1
+		portStatusIndex OBJECT-TYPE
+			SYNTAX Integer32 (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"A unique value for each serial port on the managed device.
+				The ranges of this value from 1 to the number of serial port
+				on the managed device."
+			::= { serialPortStatusEntry 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.5.1.1.2
+		serialPortFriendlyName OBJECT-TYPE
+			SYNTAX OCTET STRING
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The serial port friendly name on the managed device."
+			::= { serialPortStatusEntry 2 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.5.1.1.3
+		portStatusValue OBJECT-TYPE
+			SYNTAX INTEGER
+				{
+				available(0),
+				inuse(1)
+				}
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The serial port status of managed device.
+				If the serial port is available, the value 'available(0)' is returned.
+				If the serial port is in use, the value 'inuse(1)' is returned."
+			::= { serialPortStatusEntry 3 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.6
+		networkInfoMgmt OBJECT IDENTIFIER ::= { proactiveMonitoring 6 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.6.1
+		networkStatusTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF NetworkStatusEntry
+			MAX-ACCESS not-accessible
+			STATUS current
+			DESCRIPTION
+				"This table contains one row per networkStatusTable."
+			::= { networkInfoMgmt 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.6.1.1
+		networkStatusEntry OBJECT-TYPE
+			SYNTAX NetworkStatusEntry
+			MAX-ACCESS not-accessible
+			STATUS current
+			DESCRIPTION
+				"Information about the network adapter status entry.
+				The entry provides object(networkFriendlyName) to help NMS search the network adapter friendly name information, and objects(connectionStatus, linkSpeed, networkUtilization) to help NMS get network adapter status."
+			INDEX { networkAdapterIndex }
+			::= { networkStatusTable 1 }
+
+		
+		NetworkStatusEntry ::=
+			SEQUENCE { 
+				networkAdapterIndex
+					Integer32,
+				networkFriendlyName
+					OCTET STRING,
+				connectionStatus
+					INTEGER,
+				linkSpeed
+					Integer32,
+				networkUtilization
+					Integer32
+			 }
+
+		-- 1.3.6.1.4.1.8691.17.2.6.1.1.1
+		networkAdapterIndex OBJECT-TYPE
+			SYNTAX Integer32 (0..2147483647)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"A unique value for each network adapter on the managed device.
+				The ranges of this value from 1 to the number of network adapter on the managed device."
+			::= { networkStatusEntry 1 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.6.1.1.2
+		networkFriendlyName OBJECT-TYPE
+			SYNTAX OCTET STRING
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The network adapter friendly name on the managed device.
+				"
+			::= { networkStatusEntry 2 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.6.1.1.3
+		connectionStatus OBJECT-TYPE
+			SYNTAX INTEGER
+				{
+				disconnected(0),
+				connected(1)
+				}
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The network connection status.
+				If the network cable unplugged, the value 'disconnected(0)' is returned.
+				If the network cable plugged, the value 'connected(1)' is returned."
+			::= { networkStatusEntry 3 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.6.1.1.4
+		linkSpeed OBJECT-TYPE
+			SYNTAX Integer32 (0..1000)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current network link speed.
+				The unit of value is 'M'. Represent its status to '10M' or '100M' and '1000M'.
+				"
+			::= { networkStatusEntry 4 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.6.1.1.5
+		networkUtilization OBJECT-TYPE
+			SYNTAX Integer32 (0..100)
+			MAX-ACCESS read-only
+			STATUS current
+			DESCRIPTION
+				"The current network utilization.
+				The ranges of utilization from 0(%) to 100(%)."
+			::= { networkStatusEntry 5 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.7
+		alertNotification OBJECT IDENTIFIER ::= { proactiveMonitoring 7 }
+
+		
+		-- 1.3.6.1.4.1.8691.17.2.7.1
+		alertTrigger NOTIFICATION-TYPE
+			OBJECTS { cpuTotalUsage, cpuTemperature, memoryUsage, partitionUsage, mainboardPowerIndicator, 
+				mainboardTemperature, connectionStatus }
+			STATUS current
+			DESCRIPTION 
+				"The alertTrigger notification is generated when the monitor items value over the threshold value.
+				The SNMP agent has detected the cpuTotalUsage, cpuTemperature, 
+				memoryUsage, partitionUsage, mainboardPowerIndicator, 
+				mainboardTemperature and connectionStatus objects.
+				"
+			::= { alertNotification 1 }
+
+		
+	
+	END
+
+--
+-- PROACTIVE-MONITORING-MIB.my
+--
